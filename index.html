@@ -1,0 +1,158 @@
+<html>
+  <head>
+    <title>Yang - by Adam Proctor - Reddit Game Jam 2010</title>
+    <script type="text/javascript" src="yahoo-dom-event.js"></script>
+    <script type="text/javascript" src="game.js"></script>
+    <script type="text/javascript">
+    	/*
+    	 * See game.js for the majority of the source code
+    	 */
+    	var board = null;
+    	var initializeGame = function() {
+    		YAHOO.util.Dom.addClass('loader','hidden');
+    		YAHOO.util.Dom.removeClass('wrapper','hidden');
+    		game.init();
+    		board = game.board;
+    		var canvas = document.getElementById('gameBoard');
+    		if(canvas && canvas.getContext) {
+				board.ctx = canvas.getContext("2d");
+				board.randomBoard();
+			}
+			else {
+				document.getElementById("wrapper").innerHTML = '<div style="margin: 20px;">Sorry this requires an HTML5 compliant browser.<br /> Please try <a href="http://getfirefox.org">Firefox</a> or <a href="http://www.google.com/chrome">Google Chrome</a>';
+			}
+    	};
+    </script>
+    <style type="text/css">
+      body { margin: 0px; font-family: arial,verdana,helvetica; background: #fff; background-image: url('bg.jpg'); background-repeat: repeat-y;}
+      canvas { border: 1px solid #000; float: left; margin: auto }
+      h2, h3 { margin-bottom: 0px; }
+      h3 { font-size: 12pt;}
+      label {clear: both; width: 200px; float: left; margin-right: 5px;}
+      p,form {padding-left: 15px; margin-top: 0px;}
+      ul {margin: 0px;}
+
+      .hidden { display: none; }
+	  .btn-reload {padding-left: 18px; background-image: url('arrow_refresh.png'); background-repeat: no-repeat;}
+	  .btn-sound-on {padding-left: 18px; background-image: url('sound.png'); background-repeat: no-repeat;}
+	  .btn-undo {padding-left: 18px; background-image: url('arrow_undo.png'); background-repeat: no-repeat;}
+      .btn-new-game {padding-left: 18px; background-image: url('bomb.png'); background-repeat: no-repeat;}
+      .btn-sound-off {padding-left: 18px; background-image: url('sound_mute.png'); background-repeat: no-repeat;}
+      .btn-settings {padding-left: 18px; background-image: url('cog.png'); background-repeat: no-repeat;}
+      .btn-source {padding-left: 18px; background-image: url('page_white_compressed.png'); background-repeat: no-repeat;}
+
+      #aboutSection {clear: both;}
+      #config {width: 400px; clear: both;}
+      #config.right {float: left;}
+      #config_apply {float: left; clear: both;}
+      #controlsContainer a {margin: 5px; }
+      #controlsContainer{margin-top: 20px; padding-bottom: 5px; padding-top: 4px;}
+      #gameBoard {clear: both;}
+      #howToPlay {clear: both;}
+      #loader {width: 200px; margin: auto; text-align: center; background-image: url('ajax-loader.gif'); background-repeat: no-repeat; margin-top: 40px; height: 32px;}
+      #wrapper{width: 602px; padding-left: 10px; padding-right: 10px; margin: auto; background: white;}
+    </style>
+  </head>
+  <body onload="initializeGame();">
+  <div id="loader">
+  	<h2>LOADING...</h2>
+  </div>
+  <div id="wrapper" class="hidden">
+  	<div id="controlsContainer">
+    	<a class="btn-new-game" href="#" onclick="board.randomBoard(); return false;" title="Start a New Game [Esc]">New Game</a>
+    	<a class="btn-undo" href="#" onclick="board.undoMove(); return false;"  title="Undo last move [Ctrl-Z]">Undo</a>
+    	<a class="btn-reload" href="#" onclick="board.resetLevel(); return false;" title="Reset Level [Bkspc]">Reset Level</a>
+    	<a class="btn-settings" href="#settings" title="Change Game Settings">Settings</a>
+    	<a class="btn-sound-on" href="#" onclick="game.toggleSound(this); return false;" title="Toggle Music on/off">Music</a>
+    </div>
+    <div id="mainContent">
+      <canvas id="gameBoard" width="600" height="600"></canvas>
+    </div>
+    <div id="imageContent" class="hidden">
+    	<img id="yangSprite" src="yang.png" />
+    	<img id="yinSprite" src="yin.png" />
+    	<img id="originSprite" src="origin.png" />
+    	<img id="pondSprite" src="pond.png" />
+    	<img id="sandBg" src="sand.jpg" />
+    	<img id="gameOvr" src="gameover.png" />
+   	</div>
+   	<div id="audioContent" class="hidden">
+    	<audio id="splashOgg" src="splash.ogg" autobuffer controls></audio>
+		<audio id="bongOgg" src="bong.ogg" autobuffer controls></audio>
+		<audio id="moveOgg" src="move.ogg" autobuffer controls></audio>
+		<audio id="musicOgg" src="Far and Away.ogg" autoplay controls></audio>
+    </div>
+    <div id="howToPlay">
+    	<img src="controls.png" />
+    	<h2>How to play</h2>
+    	<p>
+    		<img src="pond.png" style="float: right;"/>The goal of the game is to move both pieces onto the target circle at the same time.<br />
+    		However whenever you move a piece in one direction, the other piece moves in the opposite direction.<br />
+    		Avoid the water pieces, or you may have to restart the puzzle.
+    	</p>
+    </div>
+    <div id="config">
+    	<h2>Settings<a name="settings"></a></h2>
+    	<form id="configForm" name="configForm" onsubmit="return false;">
+    		<label for="config_volume">Volume (0-100): </label><input type="range" name="config_volume" id="config_volume" min="0" max="100" precision="1" />
+			<label for="config_waterProbability">Water Probability: </label><input type="range" name="config_waterProbability" id="config_waterProbability" min="0" max="100" precision="1" />
+			<label for="config_wallProbability">Wall Probability: </label><input type="range" name="config_wallProbability" id="config_wallProbability" min="0" max="100" precision="1" />
+			<label for="config_numberOfOptimalMoves">Number of scramble moves: </label><input type="text" name="config_numberOfOptimalMoves" id="config_numberOfOptimalMoves" />
+			<label for="config_originPlacementTolerance">Origin Placement Tolerance: </label><input type="text" name="config_originPlacementTolerance" id="config_originPlacementTolerance" />
+			<label for="config_height">Board Height: </label><input type="text" name="config_height" id="config_height" />
+			<label for="config_width">Board Width: </label><input type="text" name="config_width" id="config_width" />
+			<input type="button" onclick="board.applySettings(); window.scrollTo(0,0); return false;" name="Apply" value="Apply" id="config_apply"/>
+    	</form>
+    	<br />
+    </div>
+    <div id="aboutSection">
+    	<h2>About</h2>
+    	<h3>Written by</h3>
+    	<ul>
+    		<li>Adam Proctor - for <a href="http://www.reddit.com/r/RedditGameJam/comments/cj3jx/reddit_game_jam_02_has_started_theme_opposites/">Reddit Game Jam 2010</a></li>
+    		<li>Theme Opposites</li>
+    	</ul>
+    	<h3>Music</h3>
+    	<ul>
+    		<li><a href="http://www.jamendo.com/en/track/26748">Far and Away - Tryad</a></li>
+    	</ul>
+    	<h3>Sounds</h3>
+    	<ul>
+    		<li><a href="http://www.freesound.org/samplesViewSingle.php?id=63643">gong</a></li>
+    		<li><a href="http://www.freesound.org/samplesViewSingle.php?id=25847">tile movement</a></li>
+			<li><a href="http://www.freesound.org/samplesViewSingle.php?id=60915">splash</a></li>
+    	</ul>
+		<h3>Icons</h3>
+    	<ul>
+    		<li><a href="http://www.famfamfam.com/lab/icons/silk/">Silk</a></li>
+    	</ul>
+    	<h3>Libraries</h3>
+    	<ul>
+    		<li><a href="http://developer.yahoo.com/yui/2/">YUI 2</a> - for basic key handling</li>
+    	</ul>
+    	<h3>Known Issues</h3>
+		    <ul>
+		    	<li>This was written as an experiment with new HTML5 elements including the &lt;canvas&gt;
+		    	and &lt;audio&gt; tags.  As a result, it won't work perfectly in some browsers, and not at
+		    	all in others.  It works best in Firefox and Google Chrome, Safari is good too but the
+		    	sound files are not supported.  Sound makes up about 75% of the size of this project
+		    	so I chose to keep it limited to the most broadly accepted format.</li>
+		    	<li><s>There is a bug with Undo that sometimes causes problems in frequently, but I felt
+		    	it's convenience over a complete level reset was worth including it regardless.</s>Fixed post-contest</li>
+		    	<li>The board is randomly scrambled, but sometimes it make a puzzle that is too easy
+		    	or too hard.  Try adjusting the settings to fit your comfort level.  And don't be afraid
+		    	to try a New game.</li>
+    		</ul>
+    	<h3>Source</h3>
+    	<ul>
+    		<li>
+    			The code is all available on the page, and in the game.js file, but if you want you can also download a
+    			<a href="YangSource.zip" class="btn-source">zipped package</a>
+    		</li>
+    	</ul>
+    </div>
+    <br /><br />
+</div>
+</body>
+
+</html>
